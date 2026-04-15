@@ -75,7 +75,47 @@ pip install flask scikit-learn pandas pillow pytesseract pyjwt requests
 
 ## 🎯 Usage
 
-### Start the Application
+### Quick Start (Launcher)
+
+**Windows:**
+```bash
+start.bat
+```
+OR
+```bash
+python run.py
+```
+
+**Mac/Linux:**
+```bash
+chmod +x start.sh
+./start.sh
+```
+OR
+```bash
+python3 run.py
+```
+
+This will show a menu where you can choose:
+1. **Terminal Mode** - CLI interface for quick detection
+2. **Website Mode** - Full web interface with authentication
+
+### Manual Start
+
+#### Terminal Mode (CLI)
+
+```bash
+python main.py
+```
+
+Features:
+- Interactive menu
+- Quick text detection
+- Image detection from file path
+- Dataset testing
+- Results saved to files
+
+#### Website Mode
 
 ```bash
 python app.py
