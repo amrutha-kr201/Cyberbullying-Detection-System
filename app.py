@@ -25,7 +25,7 @@ except ImportError:
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
-app.config['SECRET_KEY'] = 'your-secret-key-change-this-in-production'  # Change this!
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', os.urandom(24).hex())
 
 # Create necessary folders
 os.makedirs('uploads', exist_ok=True)
@@ -35,8 +35,8 @@ os.makedirs('results', exist_ok=True)
 USERS_FILE = 'users.json'
 
 # Admin credentials (change these!)
-ADMIN_USERNAME = 'admin'
-ADMIN_PASSWORD = 'Admin@3117'
+ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME', 'admin')
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'Admin@3117')
 
 def load_users():
     """Load users from file"""
@@ -679,4 +679,5 @@ if __name__ == '__main__':
     print("\nOpen your browser and go to: http://127.0.0.1:5000")
     print("\nPress Ctrl+C to stop the server")
     print("="*70 + "\n")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=False, host='0.0.0.0', port=port)
