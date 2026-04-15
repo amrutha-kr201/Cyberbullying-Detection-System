@@ -1,0 +1,96 @@
+================================================================================
+                    HOW TO RUN THE PROJECT
+================================================================================
+
+OPTION 1: Test with Dataset Samples (Recommended)
+--------------------------------------------------
+This tests the model on actual texts from your CSV file
+
+Command:
+    python test_dataset_samples.py
+
+What it does:
+✓ Loads the dataset (18,148 samples)
+✓ Trains the model
+✓ Tests on 15 random samples from the dataset
+✓ Shows 5 cyberbullying examples
+✓ Shows 5 safe examples
+
+
+OPTION 2: Test with Custom Texts
+---------------------------------
+This tests the model on new texts you can customize
+
+Command:
+    python check_any_csv.py
+
+What it does:
+✓ Loads the dataset
+✓ Trains the model
+✓ Tests on predefined sample texts
+✓ You can edit the test texts in the code
+
+
+================================================================================
+                        QUICK START
+================================================================================
+
+1. Open PowerShell in this folder:
+   C:\Users\navee\Downloads\cyberbullying
+
+2. Type one of these commands:
+   
+   python test_dataset_samples.py    (for dataset samples)
+   
+   OR
+   
+   python check_any_csv.py           (for custom texts)
+
+3. Press Enter
+
+4. Wait for results!
+
+
+================================================================================
+                    WHAT YOU'LL SEE
+================================================================================
+
+The program will:
+1. Load your CSV file
+2. Train the machine learning model
+3. Show accuracy (around 90%)
+4. Test on sample texts
+5. Show predictions with confidence levels
+
+
+================================================================================
+                        FILES
+================================================================================
+
+Main Files:
+- test_dataset_samples.py  → Tests on dataset samples
+- check_any_csv.py         → Tests on custom texts
+- final_dataset_hinglish.csv → Your training data
+
+Guide Files:
+- RUN_ME.txt               → This file
+- QUICK_START_GUIDE.txt    → Detailed guide
+- HOW_TO_USE_YOUR_CSV.txt  → How to use different CSV
+
+
+================================================================================
+                    NEED HELP?
+================================================================================
+
+If you get an error, make sure:
+✓ Python is installed
+✓ All packages are installed (numpy, pandas, scikit-learn)
+✓ You're in the correct folder
+✓ The CSV file is in the same folder
+
+
+To install packages:
+    pip install numpy pandas scikit-learn
+
+
+That's it! Just run the command and see the results! 🎉

@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Cyberbullying Detection</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 2em;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .stat-card .number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-card .icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .content-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .content-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            padding: 12px 25px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab-button.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .badge {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        .badge.success {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge.danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .badge.info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .action-btn {
+            padding: 5px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.85em;
+            margin-right: 5px;
+        }
+
+        .action-btn.delete {
+            background: #dc3545;
+            color: white;
+        }
+
+        .action-btn.view {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            margin-bottom: 20px;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .empty-state .icon {
+            font-size: 4em;
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            table {
+                font-size: 0.85em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>🛡️ Admin Dashboard</h1>
+                <p style="color: #666; margin-top: 5px;">Cyberbullying Detection System</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn" onclick="refreshData()">🔄 Refresh</button>
+                <button class="btn btn-danger" onclick="adminLogout()">Logout</button>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="icon">👥</div>
+                <h3>Total Users</h3>
+                <div class="number" id="totalUsers">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">🔍</div>
+                <h3>Total Detections</h3>
+                <div class="number" id="totalDetections">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">⚠️</div>
+                <h3>Cyberbullying Found</h3>
+                <div class="number" id="cyberbullyingCount">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">✅</div>
+                <h3>Safe Content</h3>
+                <div class="number" id="safeCount">0</div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <div class="tabs">
+                <button class="tab-button active" onclick="openTab('users')">👥 Users</button>
+                <button class="tab-button" onclick="openTab('detections')">🔍 Detection History</button>
+                <button class="tab-button" onclick="openTab('analytics')">📊 Analytics</button>
+            </div>
+
+            <!-- Users Tab -->
+            <div id="users" class="tab-content active">
+                <h2>Registered Users</h2>
+                <input type="text" class="search-box" id="userSearch" placeholder="Search users by name or email..." onkeyup="filterUsers()">
+                <div id="usersTable"></div>
+            </div>
+
+            <!-- Detections Tab -->
+            <div id="detections" class="tab-content">
+                <h2>Detection History</h2>
+                <input type="text" class="search-box" id="detectionSearch" placeholder="Search detections..." onkeyup="filterDetections()">
+                <div id="detectionsTable"></div>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div id="analytics" class="tab-content">
+                <h2>System Analytics</h2>
+                <div id="analyticsContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allUsers = [];
+        let allDetections = [];
+
+        function openTab(tabName) {
+            const tabs = document.getElementsByClassName('tab-content');
+            for (let tab of tabs) {
+                tab.classList.remove('active');
+            }
+
+            const buttons = document.getElementsByClassName('tab-button');
+            for (let button of buttons) {
+                button.classList.remove('active');
+            }
+
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        async function loadDashboardData() {
+            console.log('Loading dashboard data...');
+            try {
+                const response = await fetch('/admin/api/dashboard');
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Data received:', data);
+
+                if (response.ok) {
+                    // Update stats
+                    document.getElementById('totalUsers').textContent = data.stats.total_users;
+                    document.getElementById('totalDetections').textContent = data.stats.total_detections;
+                    document.getElementById('cyberbullyingCount').textContent = data.stats.cyberbullying_count;
+                    document.getElementById('safeCount').textContent = data.stats.safe_count;
+
+                    // Store data
+                    allUsers = data.users;
+                    allDetections = data.detections;
+
+                    // Display tables
+                    displayUsers(allUsers);
+                    displayDetections(allDetections);
+                    displayAnalytics(data.analytics);
+                    
+                    console.log('Dashboard loaded successfully');
+                } else {
+                    if (response.status === 403) {
+                        alert('Access denied. Admin only.');
+                        window.location.href = '/';
+                    } else {
+                        console.error('Error response:', data);
+                        alert('Error loading dashboard: ' + (data.error || 'Unknown error'));
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                alert('Failed to load dashboard data. Check console for details.');
+            }
+        }
+
+        function displayUsers(users) {
+            const container = document.getElementById('usersTable');
+            
+            if (users.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>No users found</p></div>';
+                return;
+            }
+
+            let html = '<table><thead><tr><th>Name</th><th>Email</th><th>Registered</th><th>Actions</th></tr></thead><tbody>';
+            
+            users.forEach(user => {
+                const date = new Date(user.registered_at).toLocaleDateString();
+                html += `
+                    <tr>
+                        <td><strong>${user.name}</strong></td>
+                        <td>${user.email}</td>
+                        <td>${date}</td>
+                        <td>
+                            <button class="action-btn view" onclick="viewUserDetails('${user.email}')">View</button>
+                            <button class="action-btn delete" onclick="deleteUser('${user.email}')">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function displayDetections(detections) {
+            const container = document.getElementById('detectionsTable');
+            
+            if (detections.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>No detections found</p></div>';
+                return;
+            }
+
+            let html = '<table><thead><tr><th>User</th><th>Text</th><th>Result</th><th>Confidence</th><th>Source</th><th>Date</th></tr></thead><tbody>';
+            
+            detections.forEach(det => {
+                const resultBadge = det.result === 'CYBERBULLYING DETECTED' ? 
+                    '<span class="badge danger">⚠️ Cyberbullying</span>' : 
+                    '<span class="badge success">✅ Safe</span>';
+                
+                const text = det.text.length > 50 ? det.text.substring(0, 50) + '...' : det.text;
+                const date = new Date(det.timestamp).toLocaleString();
+                
+                html += `
+                    <tr>
+                        <td>${det.user_name}</td>
+                        <td title="${det.text}">${text}</td>
+                        <td>${resultBadge}</td>
+                        <td>${det.confidence}</td>
+                        <td><span class="badge info">${det.source}</span></td>
+                        <td>${date}</td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function displayAnalytics(analytics) {
+            console.log('Analytics data:', analytics);
+            const container = document.getElementById('analyticsContent');
+            
+            let html = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Cyberbullying Rate</h3>
+                        <div class="number" style="color: #dc3545;">${analytics.detection_rate || 0}%</div>
+                        <p style="color: #666; margin-top: 10px;">Content flagged as harmful</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Safe Content Rate</h3>
+                        <div class="number" style="color: #28a745;">${analytics.safe_rate || 0}%</div>
+                        <p style="color: #666; margin-top: 10px;">Content marked as safe</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Detections</h3>
+                        <div class="number">${(analytics.text_detections || 0) + (analytics.image_detections || 0)}</div>
+                        <p style="color: #666; margin-top: 10px;">Text: ${analytics.text_detections || 0} | Image: ${analytics.image_detections || 0}</p>
+                    </div>
+                </div>
+                
+                <h3 style="margin-top: 30px; color: #667eea;">Recent Activity</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Detections</th>
+                            <th>Cyberbullying</th>
+                            <th>Safe</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            if (analytics.daily_stats && analytics.daily_stats.length > 0) {
+                analytics.daily_stats.forEach(day => {
+                    html += `
+                        <tr>
+                            <td>${day.date}</td>
+                            <td>${day.total}</td>
+                            <td><span class="badge danger">${day.cyberbullying}</span></td>
+                            <td><span class="badge success">${day.safe}</span></td>
+                        </tr>
+                    `;
+                });
+            } else {
+                html += '<tr><td colspan="4" style="text-align: center; color: #999;">No activity data</td></tr>';
+            }
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function filterUsers() {
+            const search = document.getElementById('userSearch').value.toLowerCase();
+            const filtered = allUsers.filter(user => 
+                user.name.toLowerCase().includes(search) || 
+                user.email.toLowerCase().includes(search)
+            );
+            displayUsers(filtered);
+        }
+
+        function filterDetections() {
+            const search = document.getElementById('detectionSearch').value.toLowerCase();
+            const filtered = allDetections.filter(det => 
+                det.text.toLowerCase().includes(search) || 
+                det.user_name.toLowerCase().includes(search)
+            );
+            displayDetections(filtered);
+        }
+
+        async function deleteUser(email) {
+            if (!confirm(`Are you sure you want to delete user: ${email}?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/admin/api/delete_user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('User deleted successfully');
+                    refreshData();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error deleting user');
+            }
+        }
+
+        function viewUserDetails(email) {
+            const user = allUsers.find(u => u.email === email);
+            const userDetections = allDetections.filter(d => d.user_email === email);
+            
+            alert(`User: ${user.name}\nEmail: ${user.email}\nRegistered: ${new Date(user.registered_at).toLocaleString()}\nTotal Detections: ${userDetections.length}`);
+        }
+
+        function refreshData() {
+            console.log('Refresh button clicked');
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = '🔄 Refreshing...';
+            
+            loadDashboardData().then(() => {
+                btn.disabled = false;
+                btn.textContent = '🔄 Refresh';
+                
+                // Show success message
+                const header = document.querySelector('.header');
+                const msg = document.createElement('div');
+                msg.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #28a745; color: white; padding: 15px 25px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 9999;';
+                msg.textContent = '✓ Dashboard refreshed successfully!';
+                document.body.appendChild(msg);
+                
+                setTimeout(() => {
+                    msg.remove();
+                }, 2000);
+            }).catch(err => {
+                btn.disabled = false;
+                btn.textContent = '🔄 Refresh';
+                console.error('Refresh failed:', err);
+            });
+        }
+
+        function adminLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                fetch('/admin/logout', { method: 'POST' })
+                    .then(() => window.location.href = '/admin/login');
+            }
+        }
+
+        // Load data on page load
+        window.addEventListener('DOMContentLoaded', loadDashboardData);
+    </script>
+</body>
+</html>

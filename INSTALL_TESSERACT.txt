@@ -1,0 +1,64 @@
+================================================================================
+                    INSTALL TESSERACT OCR - STEP BY STEP
+================================================================================
+
+STEP 1: Download Tesseract
+---------------------------
+1. Click this link to download:
+   https://github.com/UB-Mannheim/tesseract/wiki
+
+2. Download this file (64-bit):
+   tesseract-ocr-w64-setup-5.5.0.20241111.exe
+   
+   Direct link:
+   https://digi.bib.uni-mannheim.de/tesseract/tesseract-ocr-w64-setup-5.5.0.20241111.exe
+
+
+STEP 2: Install Tesseract
+--------------------------
+1. Run the downloaded .exe file
+2. Click "Next" through the installation
+3. Use the default installation path:
+   C:\Program Files\Tesseract-OCR
+4. Click "Install"
+5. Click "Finish"
+
+
+STEP 3: Test the Installation
+------------------------------
+1. Open PowerShell in your project folder
+2. Run: python detect_from_image.py
+3. If Tesseract is found, you'll see: "✓ Tesseract found"
+
+
+STEP 4: Use Image Detection
+----------------------------
+Now you can:
+- Place images in the folder
+- Run: python detect_from_image.py
+- The script will extract text and check for cyberbullying
+
+
+ALTERNATIVE: Use Without Tesseract
+-----------------------------------
+If you don't want to install Tesseract, you can still use manual text input:
+
+1. Run: python detect_from_image.py
+2. Type text when prompted
+3. Get instant cyberbullying detection results
+
+
+================================================================================
+                            QUICK TEST
+================================================================================
+
+After installing Tesseract, test it:
+
+1. Run: python detect_from_image.py
+
+2. If you see "✓ Tesseract found" - SUCCESS!
+
+3. If you see "⚠️ Tesseract not found" - Try reinstalling
+
+
+Need help? The script works with manual text input even without Tesseract!

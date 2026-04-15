@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyberbullying Detection System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            flex: 1;
+            min-width: 200px;
+            padding: 15px 30px;
+            background: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .tab-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+
+        .tab-button.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1em;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 150px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-label {
+            display: block;
+            padding: 20px;
+            background: #f8f9fa;
+            border: 2px dashed #667eea;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-label:hover {
+            background: #e9ecef;
+            border-color: #764ba2;
+        }
+
+        .file-label i {
+            font-size: 3em;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .btn:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .result.success {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            color: #155724;
+        }
+
+        .result.danger {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            color: #721c24;
+        }
+
+        .result h3 {
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .result-text {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            word-wrap: break-word;
+        }
+
+        .confidence {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .dataset-results {
+            margin-top: 20px;
+        }
+
+        .sample-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .sample-card.correct {
+            border-left-color: #28a745;
+        }
+
+        .sample-card.wrong {
+            border-left-color: #dc3545;
+        }
+
+        .sample-text {
+            font-style: italic;
+            margin-bottom: 10px;
+            color: #555;
+        }
+
+        .sample-info {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .badge {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .badge.success {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge.danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .tab-button {
+                min-width: 100%;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div style="flex: 1;"></div>
+                <div style="flex: 1; text-align: center;">
+                    <h1>🛡️ Cyberbullying Detection System</h1>
+                    <p>AI-Powered Text Analysis | 90.88% Accuracy</p>
+                </div>
+                <div style="flex: 1; text-align: right;">
+                    <div id="userInfo" style="background: rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 10px; display: inline-block;">
+                        <span id="userName" style="margin-right: 15px; font-weight: bold;">👤 Loading...</span>
+                        <button onclick="handleLogout()" style="background: rgba(255,255,255,0.3); border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; color: white; font-weight: bold;">Logout</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="openTab('text')">📝 Check Text</button>
+            <button class="tab-button" onclick="openTab('image')">📸 Check Image</button>
+            <button class="tab-button" onclick="openTab('dataset')">📊 Test Dataset</button>
+        </div>
+
+        <!-- Text Tab -->
+        <div id="text" class="tab-content active">
+            <h2>Check Custom Text</h2>
+            <div class="input-group">
+                <label for="textInput">Enter text to analyze:</label>
+                <textarea id="textInput" placeholder="Type or paste text here..."></textarea>
+            </div>
+            <button class="btn" onclick="checkText()">Analyze Text</button>
+            
+            <div class="loading" id="textLoading">
+                <div class="spinner"></div>
+                <p>Analyzing...</p>
+            </div>
+            
+            <div class="result" id="textResult"></div>
+        </div>
+
+        <!-- Image Tab -->
+        <div id="image" class="tab-content">
+            <h2>Check Image</h2>
+            <div class="input-group">
+                <label>Upload an image with text:</label>
+                <div class="file-input-wrapper">
+                    <input type="file" id="imageInput" class="file-input" accept="image/*" onchange="handleImageSelect()">
+                    <label for="imageInput" class="file-label">
+                        <div style="font-size: 3em;">📁</div>
+                        <div id="fileName">Click to select image or drag & drop</div>
+                        <div style="margin-top: 10px; color: #666;">Supports: JPG, PNG, BMP, GIF</div>
+                    </label>
+                </div>
+            </div>
+            <button class="btn" onclick="checkImage()" id="imageBtn" disabled>Analyze Image</button>
+            
+            <div class="loading" id="imageLoading">
+                <div class="spinner"></div>
+                <p>Processing image...</p>
+            </div>
+            
+            <div class="result" id="imageResult"></div>
+        </div>
+
+        <!-- Dataset Tab -->
+        <div id="dataset" class="tab-content">
+            <h2>Test with Dataset Samples</h2>
+            <p style="margin-bottom: 20px;">Test the model on 10 random samples from the training dataset</p>
+            <button class="btn" onclick="checkDataset()">Run Test</button>
+            
+            <div class="loading" id="datasetLoading">
+                <div class="spinner"></div>
+                <p>Testing samples...</p>
+            </div>
+            
+            <div id="datasetResults" class="dataset-results"></div>
+        </div>
+    </div>
+
+    <script>
+        // Check authentication on page load
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('/api/check_auth');
+                const data = await response.json();
+                
+                if (!data.authenticated) {
+                    window.location.href = '/login';
+                } else {
+                    document.getElementById('userName').textContent = `👤 ${data.user.name || data.user.email}`;
+                }
+            } catch (error) {
+                window.location.href = '/login';
+            }
+        });
+
+        async function handleLogout() {
+            try {
+                await fetch('/api/logout', { method: 'POST' });
+                window.location.href = '/login';
+            } catch (error) {
+                alert('Logout failed. Please try again.');
+            }
+        }
+
+        function openTab(tabName) {
+            // Hide all tabs
+            const tabs = document.getElementsByClassName('tab-content');
+            for (let tab of tabs) {
+                tab.classList.remove('active');
+            }
+
+            // Remove active class from all buttons
+            const buttons = document.getElementsByClassName('tab-button');
+            for (let button of buttons) {
+                button.classList.remove('active');
+            }
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function handleImageSelect() {
+            const input = document.getElementById('imageInput');
+            const fileName = document.getElementById('fileName');
+            const btn = document.getElementById('imageBtn');
+            
+            if (input.files.length > 0) {
+                fileName.textContent = input.files[0].name;
+                btn.disabled = false;
+            }
+        }
+
+        async function checkText() {
+            const text = document.getElementById('textInput').value.trim();
+            const loading = document.getElementById('textLoading');
+            const result = document.getElementById('textResult');
+
+            if (!text) {
+                alert('Please enter some text');
+                return;
+            }
+
+            loading.classList.add('show');
+            result.classList.remove('show');
+
+            try {
+                const response = await fetch('/check_text', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text: text })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    result.className = `result ${data.result_type} show`;
+                    result.innerHTML = `
+                        <h3>${data.result === 'SAFE' ? '✅' : '⚠️'} ${data.result}</h3>
+                        <div class="result-text">${data.text}</div>
+                        <div class="confidence">Confidence: ${data.confidence}</div>
+                        <p style="margin-top: 15px; font-size: 0.9em;">💾 Result automatically saved to results folder</p>
+                    `;
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                loading.classList.remove('show');
+            }
+        }
+
+        async function checkImage() {
+            const input = document.getElementById('imageInput');
+            const loading = document.getElementById('imageLoading');
+            const result = document.getElementById('imageResult');
+
+            if (!input.files.length) {
+                alert('Please select an image');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('image', input.files[0]);
+
+            loading.classList.add('show');
+            result.classList.remove('show');
+
+            try {
+                const response = await fetch('/check_image', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    result.className = `result ${data.result_type} show`;
+                    result.innerHTML = `
+                        <h3>${data.result === 'SAFE' ? '✅' : '⚠️'} ${data.result}</h3>
+                        <div class="result-text"><strong>Extracted Text:</strong><br>${data.text}</div>
+                        <div class="confidence">Confidence: ${data.confidence}</div>
+                        <p style="margin-top: 15px; font-size: 0.9em;">💾 Result automatically saved to results folder</p>
+                    `;
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                loading.classList.remove('show');
+            }
+        }
+
+        async function checkDataset() {
+            const loading = document.getElementById('datasetLoading');
+            const results = document.getElementById('datasetResults');
+
+            loading.classList.add('show');
+            results.innerHTML = '';
+
+            try {
+                const response = await fetch('/check_dataset');
+                const data = await response.json();
+
+                if (response.ok) {
+                    let html = `<h3 style="margin-bottom: 20px;">Test Results: ${data.accuracy}</h3>`;
+                    
+                    data.results.forEach((sample, index) => {
+                        const correctClass = sample.correct ? 'correct' : 'wrong';
+                        const statusIcon = sample.correct ? '✓' : '✗';
+                        
+                        html += `
+                            <div class="sample-card ${correctClass}">
+                                <div class="sample-text">${index + 1}. "${sample.text}"</div>
+                                <div class="sample-info">
+                                    <div>
+                                        <strong>Actual:</strong> 
+                                        <span class="badge ${sample.actual === 'SAFE' ? 'success' : 'danger'}">${sample.actual}</span>
+                                    </div>
+                                    <div>
+                                        <strong>Predicted:</strong> 
+                                        <span class="badge ${sample.predicted === 'SAFE' ? 'success' : 'danger'}">${sample.predicted}</span>
+                                    </div>
+                                    <div>
+                                        <strong>Confidence:</strong> ${sample.confidence}
+                                    </div>
+                                    <div>
+                                        <strong>Status:</strong> ${statusIcon}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    results.innerHTML = html;
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                loading.classList.remove('show');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+================================================================================
+                    QUICK START GUIDE
+        How to Use Your Own CSV File in 3 Simple Steps
+================================================================================
+
+📁 STEP 1: Prepare Your CSV File
+---------------------------------
+Your CSV must have these 2 columns:
+  • One column with TEXT (messages/comments)
+  • One column with LABELS (0 = safe, 1 = cyberbullying)
+
+Example:
+--------
+text,label
+"You are stupid",1
+"Have a nice day",0
+
+
+📂 STEP 2: Put CSV in the Folder
+---------------------------------
+Place your CSV file here:
+  C:\Users\navee\Downloads\cyberbullying\
+
+Example: C:\Users\navee\Downloads\cyberbullying\my_data.csv
+
+
+✏️ STEP 3: Edit check_any_csv.py
+---------------------------------
+Open: check_any_csv.py
+
+Find these 3 lines (around line 15-19):
+
+    ┌─────────────────────────────────────────────────┐
+    │ CSV_FILE = 'sample_cyberbullying_data.csv'      │ ← Change this
+    │ TEXT_COLUMN = 'text'                            │ ← Change this
+    │ LABEL_COLUMN = 'label'                          │ ← Change this
+    └─────────────────────────────────────────────────┘
+
+Change to YOUR file details:
+
+    ┌─────────────────────────────────────────────────┐
+    │ CSV_FILE = 'YOUR_FILENAME.csv'                  │
+    │ TEXT_COLUMN = 'your_text_column_name'           │
+    │ LABEL_COLUMN = 'your_label_column_name'         │
+    └─────────────────────────────────────────────────┘
+
+
+▶️ STEP 4: Run the Code
+------------------------
+Open PowerShell in the folder and type:
+
+    python check_any_csv.py
+
+Press Enter!
+
+
+================================================================================
+                            EXAMPLES
+================================================================================
+
+Example 1: File named "comments.csv"
+-------------------------------------
+Your CSV looks like:
+    message,is_toxic
+    "You're dumb",1
+    "Nice work",0
+
+Change the code to:
+    CSV_FILE = 'comments.csv'
+    TEXT_COLUMN = 'message'
+    LABEL_COLUMN = 'is_toxic'
+
+
+Example 2: File named "social_media.csv"
+-----------------------------------------
+Your CSV looks like:
+    post_content,cyberbully
+    "I hate you",1
+    "Great job",0
+
+Change the code to:
+    CSV_FILE = 'social_media.csv'
+    TEXT_COLUMN = 'post_content'
+    LABEL_COLUMN = 'cyberbully'
+
+
+================================================================================
+                        WHAT THE CODE DOES
+================================================================================
+
+1. ✓ Loads your CSV file
+2. ✓ Shows you the data
+3. ✓ Trains a machine learning model
+4. ✓ Tests the model accuracy
+5. ✓ Predicts on new sample texts
+
+
+================================================================================
+                            NEED HELP?
+================================================================================
+
+To see your CSV structure, run:
+    python -c "import pandas as pd; df=pd.read_csv('YOUR_FILE.csv'); print(df.head())"
+
+Replace YOUR_FILE.csv with your actual filename.
+
+
+That's it! You're ready to use your own data! 🎉

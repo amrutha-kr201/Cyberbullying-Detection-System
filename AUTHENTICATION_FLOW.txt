@@ -1,0 +1,276 @@
+================================================================================
+                    AUTHENTICATION FLOW DIAGRAM
+================================================================================
+
+This document explains how the authentication system works step-by-step.
+
+================================================================================
+1. SIGN UP FLOW
+================================================================================
+
+User Browser                Flask App               Supabase
+    |                          |                        |
+    |--[Visit /signup]-------->|                        |
+    |                          |                        |
+    |<--[signup.html]----------|                        |
+    |                          |                        |
+    |--[Fill form & submit]--->|                        |
+    |   (name, email, pass)    |                        |
+    |                          |                        |
+    |                          |--[POST /auth/signup]-->|
+    |                          |   (email, password)    |
+    |                          |                        |
+    |                          |                        |--[Hash password]
+    |                          |                        |--[Create user]
+    |                          |                        |--[Store in DB]
+    |                          |                        |
+    |                          |<--[User created]-------|
+    |                          |   (user_id, email)     |
+    |                          |                        |
+    |<--[Success message]------|                        |
+    |                          |                        |
+    |--[Redirect to /login]--->|                        |
+    |                          |                        |
+
+================================================================================
+2. LOGIN FLOW
+================================================================================
+
+User Browser                Flask App               Supabase
+    |                          |                        |
+    |--[Visit /login]--------->|                        |
+    |                          |                        |
+    |<--[login.html]-----------|                        |
+    |                          |                        |
+    |--[Enter credentials]---->|                        |
+    |   (email, password)      |                        |
+    |                          |                        |
+    |                          |--[POST /auth/token]--->|
+    |                          |   (email, password)    |
+    |                          |                        |
+    |                          |                        |--[Verify password]
+    |                          |                        |--[Generate JWT]
+    |                          |                        |
+    |                          |<--[JWT token]----------|
+    |                          |   (access_token, user) |
+    |                          |                        |
+    |                          |--[Store in session]    |
+    |                          |   (user_id, email,     |
+    |                          |    name, token)        |
+    |                          |                        |
+    |<--[Success]--------------|                        |
+    |                          |                        |
+    |--[Redirect to /]-------->|                        |
+    |                          |                        |
+
+================================================================================
+3. ACCESSING PROTECTED ROUTES
+================================================================================
+
+User Browser                Flask App               Session Store
+    |                          |                        |
+    |--[Visit /]-------------->|                        |
+    |                          |                        |
+    |                          |--[Check session]------>|
+    |                          |                        |
+    |                          |<--[User data]----------|
+    |                          |   (if logged in)       |
+    |                          |                        |
+    |                          |--[Is user in session?] |
+    |                          |                        |
+    |                          |   YES                  |
+    |                          |    |                   |
+    |<--[index.html]-----------|<---+                   |
+    |   (with user info)       |                        |
+    |                          |                        |
+    |                          |   NO                   |
+    |                          |    |                   |
+    |<--[Redirect to /login]---|<---+                   |
+    |                          |                        |
+
+================================================================================
+4. DETECTION WITH AUTHENTICATION
+================================================================================
+
+User Browser                Flask App               Supabase DB
+    |                          |                        |
+    |--[Submit text]---------->|                        |
+    |   (via /check_text)      |                        |
+    |                          |                        |
+    |                          |--[Check session]       |
+    |                          |   (user logged in?)    |
+    |                          |                        |
+    |                          |--[Run ML model]        |
+    |                          |   (predict result)     |
+    |                          |                        |
+    |                          |--[Save to file]        |
+    |                          |   (results/*.txt)      |
+    |                          |                        |
+    |                          |--[Save to DB]--------->|
+    |                          |   (user_id, text,      |
+    |                          |    result, confidence) |
+    |                          |                        |
+    |                          |                        |--[Store history]
+    |                          |                        |
+    |                          |<--[Saved]--------------|
+    |                          |                        |
+    |<--[Result JSON]----------|                        |
+    |   (result, confidence)   |                        |
+    |                          |                        |
+
+================================================================================
+5. LOGOUT FLOW
+================================================================================
+
+User Browser                Flask App               Session Store
+    |                          |                        |
+    |--[Click Logout]--------->|                        |
+    |   (POST /api/logout)     |                        |
+    |                          |                        |
+    |                          |--[Clear session]------>|
+    |                          |   (remove user data)   |
+    |                          |                        |
+    |                          |                        |--[Delete session]
+    |                          |                        |
+    |                          |<--[Cleared]------------|
+    |                          |                        |
+    |<--[Success]--------------|                        |
+    |                          |                        |
+    |--[Redirect to /login]--->|                        |
+    |                          |                        |
+
+================================================================================
+6. SESSION VALIDATION
+================================================================================
+
+Every Request to Protected Route:
+
+    Request
+      |
+      v
+    Check Session
+      |
+      +---> Session exists?
+      |         |
+      |         +---> YES --> User data valid?
+      |         |                |
+      |         |                +---> YES --> Allow access
+      |         |                |
+      |         |                +---> NO --> Redirect to /login
+      |         |
+      |         +---> NO --> Redirect to /login
+      |
+      v
+    Response
+
+================================================================================
+7. DATA FLOW SUMMARY
+================================================================================
+
+┌─────────────┐
+│   Browser   │
+└──────┬──────┘
+       │
+       │ HTTP Requests
+       │
+       v
+┌─────────────────────────────────────────────────────────┐
+│                    Flask Application                     │
+│                                                          │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────┐ │
+│  │   Routes     │───>│  Auth Logic  │───>│ Session  │ │
+│  │ (/login,     │    │ (login_req)  │    │ Manager  │ │
+│  │  /signup,    │    │              │    │          │ │
+│  │  /check_*)   │    └──────┬───────┘    └────┬─────┘ │
+│  └──────────────┘           │                 │        │
+│                              │                 │        │
+│  ┌──────────────┐           │                 │        │
+│  │  ML Model    │<──────────┘                 │        │
+│  │ (Detection)  │                             │        │
+│  └──────────────┘                             │        │
+└────────────────────────────────────────────────┼────────┘
+                                                 │
+                    ┌────────────────────────────┴────────┐
+                    │                                     │
+                    v                                     v
+            ┌───────────────┐                    ┌──────────────┐
+            │   Supabase    │                    │  Local Files │
+            │               │                    │              │
+            │ - User Auth   │                    │ - Results    │
+            │ - User DB     │                    │ - Logs       │
+            │ - History DB  │                    │              │
+            └───────────────┘                    └──────────────┘
+
+================================================================================
+8. SECURITY LAYERS
+================================================================================
+
+Layer 1: Password Security
+  └─> Passwords hashed by Supabase (bcrypt)
+  └─> Never stored in plain text
+  └─> Minimum 6 characters enforced
+
+Layer 2: Token Security
+  └─> JWT tokens for authentication
+  └─> Tokens expire after set time
+  └─> Tokens validated on each request
+
+Layer 3: Session Security
+  └─> Server-side session storage
+  └─> Session ID in secure cookie
+  └─> Sessions cleared on logout
+
+Layer 4: Route Protection
+  └─> @login_required decorator
+  └─> Checks session before access
+  └─> Redirects unauthorized users
+
+Layer 5: HTTPS (Production)
+  └─> Encrypted communication
+  └─> Prevents man-in-the-middle attacks
+  └─> Required for production
+
+================================================================================
+9. ERROR HANDLING FLOW
+================================================================================
+
+Request --> Check Auth --> Error?
+                |            |
+                |            +---> Invalid credentials
+                |            |       └─> Return 401 + error message
+                |            |
+                |            +---> User not found
+                |            |       └─> Return 404 + error message
+                |            |
+                |            +---> Session expired
+                |            |       └─> Redirect to /login
+                |            |
+                |            +---> Network error
+                |                    └─> Return 500 + error message
+                |
+                +---> Success
+                        └─> Continue to route handler
+
+================================================================================
+10. DATABASE SCHEMA (Optional History)
+================================================================================
+
+detection_history table:
+┌──────────────┬──────────────┬─────────────────────────────────┐
+│ Column       │ Type         │ Description                     │
+├──────────────┼──────────────┼─────────────────────────────────┤
+│ id           │ UUID         │ Primary key (auto-generated)    │
+│ user_id      │ UUID         │ Foreign key to auth.users       │
+│ text         │ TEXT         │ Analyzed text (max 500 chars)   │
+│ result       │ TEXT         │ "SAFE" or "CYBERBULLYING"       │
+│ confidence   │ FLOAT        │ Confidence score (0.0 - 1.0)    │
+│ source_type  │ TEXT         │ "Text", "Image", "Dataset"      │
+│ created_at   │ TIMESTAMP    │ When detection was performed    │
+└──────────────┴──────────────┴─────────────────────────────────┘
+
+Row Level Security (RLS):
+  - Users can only INSERT their own records
+  - Users can only SELECT their own records
+  - Enforced at database level
+
+================================================================================

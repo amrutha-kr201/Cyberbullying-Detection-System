@@ -1,0 +1,7 @@
+Flask==3.0.0
+scikit-learn==1.3.2
+pandas==2.1.4
+Pillow==10.1.0
+pytesseract==0.3.10
+PyJWT==2.8.0
+requests==2.31.0

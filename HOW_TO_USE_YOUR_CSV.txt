@@ -1,0 +1,87 @@
+================================================================================
+HOW TO USE YOUR OWN CSV FILE WITH THE CYBERBULLYING DETECTION CODE
+================================================================================
+
+STEP 1: PREPARE YOUR CSV FILE
+------------------------------
+Your CSV file should have 2 columns:
+
+1. Text column - containing messages/comments to check
+2. Label column - containing 0 (safe) or 1 (cyberbullying)
+
+Example CSV format:
+-------------------
+text,label
+"You are stupid",1
+"Have a nice day",0
+"I hate you",1
+"Thank you",0
+
+
+STEP 2: PLACE YOUR CSV FILE
+----------------------------
+Put your CSV file in the same folder as the Python scripts:
+C:\Users\navee\Downloads\cyberbullying\
+
+
+STEP 3: EDIT THE CODE
+----------------------
+Open the file: check_any_csv.py
+
+Find these lines (around line 15-19):
+
+    CSV_FILE = 'sample_cyberbullying_data.csv'
+    TEXT_COLUMN = 'text'
+    LABEL_COLUMN = 'label'
+
+Change them to match YOUR file:
+
+    CSV_FILE = 'YOUR_FILE_NAME.csv'        ← Change this to your filename
+    TEXT_COLUMN = 'your_text_column'       ← Change to your text column name
+    LABEL_COLUMN = 'your_label_column'     ← Change to your label column name
+
+
+STEP 4: RUN THE CODE
+--------------------
+Open PowerShell or Command Prompt in the folder and run:
+
+    python check_any_csv.py
+
+
+EXAMPLES:
+=========
+
+Example 1: If your CSV is named "my_data.csv" with columns "message" and "is_bullying"
+---------------------------------------------------------------------------------------
+CSV_FILE = 'my_data.csv'
+TEXT_COLUMN = 'message'
+LABEL_COLUMN = 'is_bullying'
+
+
+Example 2: If your CSV is named "comments.csv" with columns "comment_text" and "toxic"
+---------------------------------------------------------------------------------------
+CSV_FILE = 'comments.csv'
+TEXT_COLUMN = 'comment_text'
+LABEL_COLUMN = 'toxic'
+
+
+TROUBLESHOOTING:
+================
+
+Error: "File not found"
+→ Make sure the CSV file is in the same folder as the script
+
+Error: "Column not found"
+→ Check that TEXT_COLUMN and LABEL_COLUMN match your CSV column names exactly
+
+Error: "No data"
+→ Make sure your CSV has data and is properly formatted
+
+
+NEED HELP?
+==========
+Run this command to see your CSV structure:
+
+    python -c "import pandas as pd; df = pd.read_csv('YOUR_FILE.csv'); print(df.head()); print(df.columns.tolist())"
+
+Replace YOUR_FILE.csv with your actual filename.

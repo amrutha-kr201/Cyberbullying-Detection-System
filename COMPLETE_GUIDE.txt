@@ -1,0 +1,142 @@
+================================================================================
+                    CYBERBULLYING DETECTION - COMPLETE GUIDE
+================================================================================
+
+YOU NOW HAVE 3 WAYS TO DETECT CYBERBULLYING:
+=============================================
+
+1. TEST WITH DATASET SAMPLES
+   Command: python test_dataset_samples.py
+   - Tests on actual texts from your CSV file
+   - Shows 15 random samples
+   - Shows accuracy
+
+2. TEST WITH CUSTOM TEXTS
+   Command: python check_any_csv.py
+   - Tests on predefined sample texts
+   - You can edit the texts in the code
+
+3. DETECT FROM IMAGES (NEW!)
+   Command: python detect_from_image.py
+   - Extracts text from images
+   - Detects cyberbullying in the text
+   - Works with screenshots, photos, etc.
+
+
+================================================================================
+                    HOW TO USE IMAGE DETECTION
+================================================================================
+
+STEP 1: Install Tesseract OCR (One-time setup)
+-----------------------------------------------
+1. Go to: https://github.com/UB-Mannheim/tesseract/wiki
+2. Download: tesseract-ocr-w64-setup-5.x.x.exe
+3. Run the installer
+4. Use default installation path
+5. Done!
+
+
+STEP 2: Use Image Detection
+----------------------------
+
+METHOD A: Detect from Image Files
+----------------------------------
+1. Place your image in this folder:
+   C:\Users\navee\Downloads\cyberbullying\
+
+2. Run: python detect_from_image.py
+
+3. The script will automatically:
+   - Find all images (.jpg, .png, etc.)
+   - Extract text from each image
+   - Check for cyberbullying
+   - Show results
+
+
+METHOD B: Manual Text Input (No Tesseract needed)
+--------------------------------------------------
+1. Run: python detect_from_image.py
+
+2. Type or paste text when prompted
+
+3. Get instant results
+
+4. Type 'quit' to exit
+
+
+================================================================================
+                        EXAMPLE SCENARIOS
+================================================================================
+
+Scenario 1: Check a screenshot
+-------------------------------
+1. Take screenshot of a comment/message
+2. Save as "screenshot.png" in the folder
+3. Run: python detect_from_image.py
+4. Result: ⚠️ CYBERBULLYING DETECTED (95%)
+
+
+Scenario 2: Check multiple images
+----------------------------------
+1. Place multiple images in folder
+2. Run: python detect_from_image.py
+3. All images will be processed automatically
+
+
+Scenario 3: Quick text check
+-----------------------------
+1. Run: python detect_from_image.py
+2. Type: "You are stupid"
+3. Result: ⚠️ CYBERBULLYING DETECTED (98%)
+
+
+================================================================================
+                        ALL YOUR FILES
+================================================================================
+
+Main Scripts:
+✓ test_dataset_samples.py  - Test with dataset samples
+✓ check_any_csv.py         - Test with custom texts
+✓ detect_from_image.py     - Detect from images (NEW!)
+
+Data Files:
+✓ final_dataset_hinglish.csv - Training dataset (18,148 samples)
+✓ sample_cyberbullying_data.csv - Sample dataset
+
+Guide Files:
+✓ COMPLETE_GUIDE.txt       - This file
+✓ IMAGE_DETECTION_GUIDE.txt - Detailed image detection guide
+✓ RUN_ME.txt               - Quick start guide
+✓ QUICK_START_GUIDE.txt    - General guide
+✓ HOW_TO_USE_YOUR_CSV.txt  - CSV usage guide
+
+
+================================================================================
+                        QUICK COMMANDS
+================================================================================
+
+Test dataset samples:
+    python test_dataset_samples.py
+
+Test custom texts:
+    python check_any_csv.py
+
+Detect from images:
+    python detect_from_image.py
+
+
+================================================================================
+                        WHAT YOU ACHIEVED
+================================================================================
+
+✅ Loaded 18,148 samples dataset
+✅ Trained machine learning model (90.88% accuracy)
+✅ Can detect cyberbullying in text
+✅ Can detect cyberbullying in images (NEW!)
+✅ Can test with dataset samples
+✅ Can test with custom texts
+✅ Can process multiple images at once
+
+
+CONGRATULATIONS! 🎉
+Your cyberbullying detection system is complete and fully functional!
