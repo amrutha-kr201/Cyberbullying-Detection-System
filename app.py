@@ -30,12 +30,28 @@ THREAT_KEYWORDS = [
     'rape you', 'stab you', 'shoot you', 'bomb you',
     'you are worthless', 'you are nothing', 'nobody likes you',
     'everyone hates you', 'you deserve to die', 'wish you were dead',
-    'i hate you', 'you are ugly', 'you are stupid and worthless'
+    'i hate you', 'you are ugly', 'you are stupid and worthless',
+    # Harassment / bullying terms
+    'harassment', 'harassing', 'harass',
+    'bully', 'bullying', 'cyberbullying', 'cyberbully',
+    'sexual harassment', 'sexual abuse', 'molest',
+    'inappropriate', 'mobbing',
+]
+
+# ─── Harassment / Bullying keyword fragments (for image OCR word clouds etc.)
+HARASSMENT_KEYWORDS = [
+    'harassment', 'harassing', 'harass',
+    'bully', 'bullying', 'cyberbullying',
+    'sexual', 'molest', 'inappropriate', 'mobbing',
+    'victim', 'abuse', 'abusive',
 ]
 
 def check_threat_keywords(text):
     text_lower = text.lower()
     for keyword in THREAT_KEYWORDS:
+        if keyword in text_lower:
+            return True, keyword
+    for keyword in HARASSMENT_KEYWORDS:
         if keyword in text_lower:
             return True, keyword
     return False, None
@@ -75,6 +91,20 @@ def fuzzy_threat_check(text):
         'loser': 'loser',
         'idiot': 'idiot',
         'kys': 'kill yourself',
+        # Harassment / bullying
+        'harassment': 'harassment',
+        'harassing': 'harassing',
+        'harass': 'harassment',
+        'bully': 'bullying',
+        'bullying': 'bullying',
+        'cyberbullying': 'cyberbullying',
+        'cyberbully': 'cyberbullying',
+        'sexual': 'sexual harassment',
+        'molest': 'molestation',
+        'inappropriate': 'inappropriate behavior',
+        'mobbing': 'mobbing',
+        'victim': 'victim',
+        'abuse': 'abuse',
     }
     for fragment, label in danger_fragments.items():
         if fragment in letters_only:
