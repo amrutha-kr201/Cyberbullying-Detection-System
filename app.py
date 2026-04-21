@@ -3,8 +3,10 @@ import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
-from PIL import Image
+from PIL import Image, ImageFilter, ImageEnhance
+import PIL.ImageOps
 import pytesseract
+import easyocr
 import os
 from datetime import datetime
 import warnings
@@ -13,6 +15,119 @@ import jwt
 import json
 from functools import wraps
 warnings.filterwarnings('ignore')
+
+# Initialize EasyOCR reader once (loads model on first use)
+print("Loading EasyOCR model...")
+ocr_reader = easyocr.Reader(['en'], verbose=False)
+print("EasyOCR ready!")
+
+# ─── Threat Keywords ──────────────────────────────────────────────────────────
+THREAT_KEYWORDS = [
+    'i will kill you', 'kill you', 'i will hurt you', 'i will find you',
+    'you will die', 'gonna kill', 'going to kill', 'murder you',
+    'kill yourself', 'kys', 'go die', 'end your life',
+    'you should die', 'i will destroy you', 'beat you up',
+    'rape you', 'stab you', 'shoot you', 'bomb you',
+    'you are worthless', 'you are nothing', 'nobody likes you',
+    'everyone hates you', 'you deserve to die', 'wish you were dead',
+    'i hate you', 'you are ugly', 'you are stupid and worthless'
+]
+
+def check_threat_keywords(text):
+    text_lower = text.lower()
+    for keyword in THREAT_KEYWORDS:
+        if keyword in text_lower:
+            return True, keyword
+    return False, None
+
+def fuzzy_threat_check(text):
+    """
+    Catches garbled OCR like 'ILL YO!' which is 'KILL YOU' with K missing.
+    Extracts only letters and checks for threat substrings.
+    """
+    import re
+    letters_only = ' '.join(re.sub(r'[^a-zA-Z\s]', '', text).lower().split())
+
+    # Check full keywords against letters-only version
+    for keyword in THREAT_KEYWORDS:
+        keyword_letters = re.sub(r'[^a-zA-Z\s]', '', keyword).lower()
+        if keyword_letters in letters_only:
+            return True, keyword
+
+    # Check fragments - catches partial OCR like "ILL YO" from "KILL YOU"
+    danger_fragments = {
+        'ill yo': 'kill you',       # OCR misses K → "ILL YOU"
+        'kill': 'kill',
+        'murder': 'murder',
+        'die': 'die',
+        'death': 'death',
+        'hurt': 'hurt',
+        'rape': 'rape',
+        'stab': 'stab',
+        'shoot': 'shoot',
+        'bomb': 'bomb',
+        'attack': 'attack',
+        'destroy': 'destroy',
+        'hate': 'hate',
+        'ugly': 'ugly',
+        'stupid': 'stupid',
+        'worthless': 'worthless',
+        'loser': 'loser',
+        'idiot': 'idiot',
+        'kys': 'kill yourself',
+    }
+    for fragment, label in danger_fragments.items():
+        if fragment in letters_only:
+            return True, label
+
+    return False, None
+
+def predict_with_override(text):
+    """Predict with keyword override for serious threats."""
+    # Exact keyword check
+    is_threat, matched = check_threat_keywords(text)
+    if is_threat:
+        return 1, 0.99
+    # Fuzzy check (catches garbled OCR)
+    is_threat, matched = fuzzy_threat_check(text)
+    if is_threat:
+        return 1, 0.97
+    vec  = vectorizer.transform([text])
+    pred = model.predict(vec)[0]
+    prob = model.predict_proba(vec)[0]
+    conf = prob[1] if pred == 1 else prob[0]
+    return pred, conf
+
+def extract_text_from_image(image_path):
+    """Extract text using EasyOCR (primary) with Tesseract as fallback."""
+
+    # --- EasyOCR (primary - handles artistic/stylized fonts) ---
+    try:
+        results = ocr_reader.readtext(image_path)
+        if results:
+            easy_text = ' '.join([text for (_, text, conf) in results if conf > 0.1])
+            if easy_text.strip():
+                return easy_text.strip()
+    except Exception as e:
+        print(f"EasyOCR failed: {e}")
+
+    # --- Tesseract fallback ---
+    try:
+        img = Image.open(image_path)
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+        gray = img.convert('L')
+        texts = []
+        for pil_img in [gray, PIL.ImageOps.invert(gray),
+                        ImageEnhance.Contrast(gray).enhance(3.0)]:
+            for psm in ['--psm 6', '--psm 3', '--psm 11']:
+                t = pytesseract.image_to_string(pil_img, config=psm).strip()
+                if t:
+                    texts.append(t)
+        return max(texts, key=len) if texts else ""
+    except Exception as e:
+        print(f"Tesseract fallback failed: {e}")
+        return ""
 
 # Import Supabase config
 try:
@@ -55,12 +170,13 @@ def user_exists(email):
     users = load_users()
     return email.lower() in users
 
-def register_user(name, email):
+def register_user(name, email, dob):
     """Register a new user"""
     users = load_users()
     users[email.lower()] = {
         'name': name,
         'email': email,
+        'dob': dob,
         'registered_at': datetime.now().isoformat()
     }
     save_users(users)
@@ -73,6 +189,108 @@ def get_user(email):
 def is_admin():
     """Check if current user is admin"""
     return session.get('is_admin', False)
+
+def cleanup_orphaned_detections():
+    """Remove detection history for users that no longer exist"""
+    try:
+        # Get current users
+        users = load_users()
+        user_emails = [email.lower() for email in users.keys()]
+        
+        # Get all result files
+        results_dir = "results"
+        if not os.path.exists(results_dir):
+            return
+        
+        # Process all web_results files
+        for filename in os.listdir(results_dir):
+            if filename.startswith('web_results_') and filename.endswith('.txt'):
+                filepath = os.path.join(results_dir, filename)
+                
+                # Read the file
+                with open(filepath, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                if not content.strip():
+                    continue
+                
+                # Split into entries
+                entries = content.split('='*70)
+                filtered_entries = []
+                
+                for entry in entries:
+                    if not entry.strip():
+                        continue
+                    
+                    # Extract user email from entry
+                    user_found = False
+                    for line in entry.split('\n'):
+                        if line.startswith('User:') and '(' in line:
+                            email = line.split('(')[1].replace(')', '').strip().lower()
+                            if email in user_emails:
+                                user_found = True
+                                break
+                    
+                    # Keep entry only if user still exists
+                    if user_found:
+                        filtered_entries.append(entry)
+                
+                # Write back the filtered content
+                if filtered_entries:
+                    new_content = ('='*70).join(filtered_entries)
+                    with open(filepath, 'w', encoding='utf-8') as f:
+                        f.write(new_content)
+                else:
+                    # If no entries left, create empty file
+                    with open(filepath, 'w', encoding='utf-8') as f:
+                        f.write("")
+                        
+        print("Orphaned detection records cleaned up successfully")
+                        
+    except Exception as e:
+        print(f"Error cleaning up orphaned detections: {e}")
+
+def delete_user_detections(user_email):
+    """Delete all detection history for a specific user"""
+    try:
+        # Get all result files
+        results_dir = "results"
+        if not os.path.exists(results_dir):
+            return
+        
+        # Process all web_results files
+        for filename in os.listdir(results_dir):
+            if filename.startswith('web_results_') and filename.endswith('.txt'):
+                filepath = os.path.join(results_dir, filename)
+                
+                # Read the file
+                with open(filepath, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                # Split into entries
+                entries = content.split('='*70)
+                filtered_entries = []
+                
+                for entry in entries:
+                    if not entry.strip():
+                        continue
+                    
+                    # Check if this entry belongs to the user
+                    if f"({user_email})" not in entry:
+                        filtered_entries.append(entry)
+                
+                # Write back the filtered content
+                if filtered_entries:
+                    new_content = ('='*70).join(filtered_entries)
+                    with open(filepath, 'w', encoding='utf-8') as f:
+                        f.write(new_content)
+                else:
+                    # If no entries left, create empty file
+                    with open(filepath, 'w', encoding='utf-8') as f:
+                        f.write("")
+                        
+    except Exception as e:
+        print(f"Error deleting user detections: {e}")
 
 def load_detections():
     """Load all detections from results file"""
@@ -257,9 +475,10 @@ def api_signup():
         data = request.get_json()
         email = data.get('email')
         name = data.get('name')
+        dob = data.get('dob')
         
-        if not email or not name:
-            return jsonify({'error': 'Name and email are required'}), 400
+        if not email or not name or not dob:
+            return jsonify({'error': 'Name, email, and date of birth are required'}), 400
         
         # Validate email is Gmail
         if not email.lower().endswith('@gmail.com'):
@@ -270,12 +489,13 @@ def api_signup():
             return jsonify({'error': 'This email is already registered. Please login instead.'}), 400
         
         # Register new user
-        register_user(name, email)
+        register_user(name, email, dob)
         
         # Store user in session
         session['user'] = {
             'email': email,
-            'name': name
+            'name': name,
+            'dob': dob
         }
         
         return jsonify({'message': 'Account created successfully'}), 200
@@ -288,10 +508,10 @@ def api_login():
     try:
         data = request.get_json()
         email = data.get('email')
-        name = data.get('name')
+        dob = data.get('dob')
         
-        if not email or not name:
-            return jsonify({'error': 'Name and email are required'}), 400
+        if not email or not dob:
+            return jsonify({'error': 'Email and date of birth are required'}), 400
         
         # Validate email is Gmail
         if not email.lower().endswith('@gmail.com'):
@@ -304,14 +524,15 @@ def api_login():
         # Get user data
         user_data = get_user(email)
         
-        # Verify name matches
-        if user_data['name'].lower() != name.lower():
-            return jsonify({'error': 'Name does not match our records'}), 401
+        # Verify date of birth matches
+        if user_data.get('dob') != dob:
+            return jsonify({'error': 'Date of birth does not match our records'}), 401
         
         # Store user in session
         session['user'] = {
             'email': email,
-            'name': user_data['name']
+            'name': user_data['name'],
+            'dob': user_data.get('dob')
         }
         
         return jsonify({'message': 'Login successful'}), 200
@@ -368,21 +589,16 @@ def check_text():
         if not text:
             return jsonify({'error': 'Please enter some text'}), 400
         
-        # Predict
-        text_vec = vectorizer.transform([text])
-        prediction = model.predict(text_vec)[0]
-        probability = model.predict_proba(text_vec)[0]
+        # Predict with keyword override
+        prediction, conf = predict_with_override(text)
         
         if prediction == 1:
             result = "CYBERBULLYING DETECTED"
             result_type = "danger"
-            conf = probability[1]
         else:
             result = "SAFE"
             result_type = "success"
-            conf = probability[0]
         
-        # Save result
         save_result(text, result, conf, "Text Input")
         
         return jsonify({
@@ -416,32 +632,22 @@ def check_image():
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
         
-        # Extract text from image
-        img = Image.open(filepath)
-        configs = ['--psm 6', '--psm 3', '--psm 11']
-        best_text = ""
-        
-        for config in configs:
-            text = pytesseract.image_to_string(img, config=config).strip()
-            if len(text) > len(best_text):
-                best_text = text
+        # Extract text with enhanced preprocessing
+        best_text = extract_text_from_image(filepath)
         
         if not best_text:
+            os.remove(filepath)
             return jsonify({'error': 'No text found in image'}), 400
         
-        # Predict
-        text_vec = vectorizer.transform([best_text])
-        prediction = model.predict(text_vec)[0]
-        probability = model.predict_proba(text_vec)[0]
+        # Predict with keyword override
+        prediction, conf = predict_with_override(best_text)
         
         if prediction == 1:
             result = "CYBERBULLYING DETECTED"
             result_type = "danger"
-            conf = probability[1]
         else:
             result = "SAFE"
             result_type = "success"
-            conf = probability[0]
         
         # Save result
         save_result(best_text, result, conf, "Image Upload")
@@ -453,7 +659,7 @@ def check_image():
             'result': result,
             'result_type': result_type,
             'confidence': f"{conf:.2%}",
-            'text': best_text[:200] + "..." if len(best_text) > 200 else best_text
+            'text': best_text[:300] + "..." if len(best_text) > 300 else best_text
         })
     
     except Exception as e:
@@ -645,32 +851,46 @@ def admin_api_dashboard():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/admin/api/delete_user', methods=['POST'])
-def admin_delete_user():
+# Simple user deletion endpoint
+@app.route('/admin/delete/<email>')
+def delete_user_simple(email):
+    """Simple GET-based user deletion for admin"""
     if not is_admin():
         return jsonify({'error': 'Access denied'}), 403
     
     try:
-        data = request.get_json()
-        email = data.get('email')
-        
-        if not email:
-            return jsonify({'error': 'Email required'}), 400
-        
-        # Don't allow deleting admin
-        if email.lower() == ADMIN_EMAIL.lower():
-            return jsonify({'error': 'Cannot delete admin user'}), 400
+        # Protect admin accounts from deletion
+        admin_emails = ['admin@gmail.com', 'administrator@gmail.com']
+        if email.lower() in admin_emails:
+            return redirect('/admin?error=cannot_delete_admin')
         
         users = load_users()
         if email.lower() in users:
+            # Delete user from users.json
             del users[email.lower()]
             save_users(users)
-            return jsonify({'message': 'User deleted successfully'}), 200
+            
+            # Delete all detection history for this user
+            delete_user_detections(email)
+            
+            return redirect('/admin?deleted=' + email)
         else:
-            return jsonify({'error': 'User not found'}), 404
-    
+            return redirect('/admin?error=user_not_found')
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return redirect('/admin?error=' + str(e))
+
+# Cleanup orphaned detection records
+@app.route('/admin/cleanup')
+def cleanup_orphaned_records():
+    """Clean up detection records for deleted users"""
+    if not is_admin():
+        return jsonify({'error': 'Access denied'}), 403
+    
+    try:
+        cleanup_orphaned_detections()
+        return redirect('/admin?cleanup=success')
+    except Exception as e:
+        return redirect('/admin?error=' + str(e))
 
 if __name__ == '__main__':
     print("\n" + "="*70)

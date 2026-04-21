@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Admin Dashboard - Cyberbullying Detection</title>
     <style>
         * {
@@ -169,6 +172,8 @@
         table td {
             padding: 12px 15px;
             border-bottom: 1px solid #f0f0f0;
+            word-wrap: break-word;
+            max-width: 300px;
         }
 
         table tr:hover {
@@ -204,11 +209,24 @@
             cursor: pointer;
             font-size: 0.85em;
             margin-right: 5px;
+            text-decoration: none;
+            display: inline-block;
         }
 
         .action-btn.delete {
             background: #dc3545;
             color: white;
+        }
+
+        .action-btn.delete:hover {
+            background: #c82333;
+            color: white;
+        }
+
+        .action-btn.disabled {
+            background: #6c757d;
+            color: white;
+            cursor: not-allowed;
         }
 
         .action-btn.view {
@@ -323,7 +341,14 @@
 
             <!-- Users Tab -->
             <div id="users" class="tab-content active">
-                <h2>Registered Users</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2>Registered Users</h2>
+                    <a href="/admin/cleanup" class="action-btn" style="background: #28a745; color: white; padding: 8px 15px;" onclick="return confirm('Clean up detection records for deleted users?')">🧹 Cleanup Records</a>
+                </div>
+                
+                <!-- Notification area -->
+                <div id="notification" style="display: none; padding: 10px; margin: 10px 0; border-radius: 5px;"></div>
+                
                 <input type="text" class="search-box" id="userSearch" placeholder="Search users by name or email..." onkeyup="filterUsers()">
                 <div id="usersTable"></div>
             </div>
@@ -421,7 +446,10 @@
                         <td>${date}</td>
                         <td>
                             <button class="action-btn view" onclick="viewUserDetails('${user.email}')">View</button>
-                            <button class="action-btn delete" onclick="deleteUser('${user.email}')">Delete</button>
+                            ${user.email.toLowerCase().includes('admin') ? 
+                                '<span class="action-btn disabled">Protected</span>' : 
+                                `<a href="/admin/delete/${user.email}" class="action-btn delete" onclick="return confirm('Are you sure you want to delete user: ${user.email}?')">Delete</a>`
+                            }
                         </td>
                     </tr>
                 `;
@@ -446,7 +474,7 @@
                     '<span class="badge danger">⚠️ Cyberbullying</span>' : 
                     '<span class="badge success">✅ Safe</span>';
                 
-                const text = det.text.length > 50 ? det.text.substring(0, 50) + '...' : det.text;
+                const text = det.text;
                 const date = new Date(det.timestamp).toLocaleString();
                 
                 html += `
@@ -538,31 +566,6 @@
             displayDetections(filtered);
         }
 
-        async function deleteUser(email) {
-            if (!confirm(`Are you sure you want to delete user: ${email}?`)) {
-                return;
-            }
-
-            try {
-                const response = await fetch('/admin/api/delete_user', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    alert('User deleted successfully');
-                    refreshData();
-                } else {
-                    alert('Error: ' + data.error);
-                }
-            } catch (error) {
-                alert('Error deleting user');
-            }
-        }
-
         function viewUserDetails(email) {
             const user = allUsers.find(u => u.email === email);
             const userDetections = allDetections.filter(d => d.user_email === email);
@@ -606,6 +609,42 @@
 
         // Load data on page load
         window.addEventListener('DOMContentLoaded', loadDashboardData);
+        
+        // Show notifications based on URL parameters
+        window.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const notification = document.getElementById('notification');
+            
+            if (urlParams.has('deleted')) {
+                notification.style.display = 'block';
+                notification.style.background = '#d4edda';
+                notification.style.color = '#155724';
+                notification.style.border = '1px solid #c3e6cb';
+                notification.textContent = 'User ' + urlParams.get('deleted') + ' and their detection history deleted successfully!';
+                setTimeout(() => notification.style.display = 'none', 5000);
+            } else if (urlParams.has('cleanup')) {
+                notification.style.display = 'block';
+                notification.style.background = '#d4edda';
+                notification.style.color = '#155724';
+                notification.style.border = '1px solid #c3e6cb';
+                notification.textContent = 'Orphaned detection records cleaned up successfully!';
+                setTimeout(() => notification.style.display = 'none', 5000);
+            } else if (urlParams.has('error')) {
+                notification.style.display = 'block';
+                notification.style.background = '#f8d7da';
+                notification.style.color = '#721c24';
+                notification.style.border = '1px solid #f5c6cb';
+                const error = urlParams.get('error');
+                if (error === 'cannot_delete_admin') {
+                    notification.textContent = 'Cannot delete admin users - they are protected!';
+                } else if (error === 'user_not_found') {
+                    notification.textContent = 'User not found!';
+                } else {
+                    notification.textContent = 'Error: ' + error;
+                }
+                setTimeout(() => notification.style.display = 'none', 5000);
+            }
+        });
     </script>
 </body>
 </html>

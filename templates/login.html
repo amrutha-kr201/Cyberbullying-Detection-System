@@ -217,13 +217,13 @@
 
         <form id="loginForm" onsubmit="handleLogin(event)">
             <div class="form-group">
-                <label for="name">Your Name</label>
-                <input type="text" id="name" name="name" required placeholder="Enter your name">
+                <label for="email">Gmail Address</label>
+                <input type="email" id="email" name="email" required placeholder="your@gmail.com">
             </div>
 
             <div class="form-group">
-                <label for="email">Gmail Address</label>
-                <input type="email" id="email" name="email" required placeholder="your@gmail.com">
+                <label for="dob">Date of Birth</label>
+                <input type="date" id="dob" name="dob" required>
             </div>
 
             <button type="submit" class="btn" id="loginBtn">Login</button>
@@ -244,8 +244,8 @@
         async function handleLogin(event) {
             event.preventDefault();
             
-            const name = document.getElementById('name').value;
             const email = document.getElementById('email').value;
+            const dob = document.getElementById('dob').value;
             const alert = document.getElementById('alert');
             const loading = document.getElementById('loading');
             const btn = document.getElementById('loginBtn');
@@ -269,7 +269,7 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ name, email })
+                    body: JSON.stringify({ email, dob })
                 });
 
                 const data = await response.json();
